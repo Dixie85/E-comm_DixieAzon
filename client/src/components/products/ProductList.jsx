@@ -1,49 +1,72 @@
-import Product from './Product.jsx';
-import "../../App.css"
 import CategorySorter from "./CategorySorter.jsx";
+import { useEffect, useState } from "react";
+import useProduct from "../../hooks/useProduct.jsx";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate.jsx";
+import { useNavigate, useLocation } from "react-router-dom";
+import ProductPagination from "../productPagination.jsx";
 
-const sorted = false;
+const PRODUCKTS_URL = "/api/product";
 
-function sortByCategory(products) {
-    console.log(products)
-    return products.sort(compareProductCategory);
-}
+function ProductList() {
+  const { products ,setProducts } = useProduct();
+  const [filterCategory, setFilterCategory] = useState('all')
+  const axiosPrivate = useAxiosPrivate();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-function compareProductCategory(a, b) {
-    if (a.category < b.category) {
-        return -1;
-    }
-    if (a.category > b.category) {
-        return 1;
-    }
-    return 0;
-}
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
 
-function sortSomething(category) {
-    console.log('sorting things would be cool' + category);
-}
+    const getProducts = async () => {
+      try {
+        const response = await axiosPrivate.get(PRODUCKTS_URL, {
+          signal: controller.signal,
+        });
+        console.log(response, "responce");
+        setProducts(() => [...response?.data.data]);
+      } catch (error) {
+        console.log(error);
+        navigate("/login", { state: { from: location }, replace: true });
+      }
+    };
+    getProducts();
 
-function ProductList({products, addToCart}) {
-    let sortedProducts;
-    if (sorted) {
-        sortedProducts = sortByCategory(products);
-    } else {
-        sortedProducts = products;
-    }
-    return (
-        <>
-            <CategorySorter categories={['First Category', 'Second Category']} sorterFunction={sortSomething}/>
-            <section className={"product_list"}>{
-                sortedProducts
-                    .map((p) => {
-                        return (
-                            <Product key={p.id}
-                                     product={p}
-                                     addToCart={addToCart}/>)
-                    })
-            }
-            </section>
-        </>)
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const categories =
+  products
+    .map(product => product.category)
+    .reduce((arr, currentCategory) => {
+      if (arr.includes(currentCategory)) {
+        return [...arr]
+      } else {
+        return [...arr, currentCategory]
+      }
+    }, ['all']
+  );
+
+  function sorterFunction(category) {
+    setFilterCategory(category);
+  }
+
+  return (
+    <section className="flex flex-col max-w-screen-xl mx-auto">
+      <CategorySorter
+        categories={categories}
+        sorterFunction={sorterFunction}
+      />
+      <section className={"product_list"}>
+        <ProductPagination products={products
+        .filter(product =>
+          filterCategory === 'all' ? true : product.category === filterCategory
+        )}/>
+      </section>
+    </section>
+  );
 }
 
 export default ProductList;

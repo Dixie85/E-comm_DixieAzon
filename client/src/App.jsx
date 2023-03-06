@@ -1,14 +1,9 @@
-import './App.css';
-import {useState} from 'react';
-
 import {
     BrowserRouter as Router,
     Routes,
     Route,
 } from 'react-router-dom';
 
-import {fakeProducts} from './fakedata/Fakedata.js';
-import {fakecart} from './fakedata/fakecart.js';
 import NavBar from './components/Navbar.jsx';
 import Cart from './components/checkout/Cart.jsx';
 import AdminPage from "./admin/AdminPage.jsx";
@@ -17,45 +12,50 @@ import ProductList from './components/Products/ProductList.jsx';
 import LoginForm from './components/login/LoginForm.jsx';
 import NewUserForm from './components/login/NewUserForm.jsx';
 import SuperAdminPage from "./admin/SuperAdminPage.jsx";
-
-function addToCart(productId) {
-    console.log("Add " + productId + " From the App")
-    //add item to the current Cart
-}
-
-function removeFromCart(productId) {
-    console.log("Remove " + productId + " From the App")
-    //remove item from the current Cart
-}
-
-function getCurrentCart() {
-    return fakecart;
-    //update to get from localstorage
-}
+import RequireAuth from './components/auth/RequireAuth';
+import DetailsCard from './components/DetailsCard';
+import ProductsOverview from './components/ProductsOverview';
+import Page404 from "./components/Page404";
 
 
 function App() {
-    const [currentCart, setCurrentCart] = useState(getCurrentCart());
-    return (
-        <div className="App">
-            <Router>
-                <header className={"top_header"}>
-                    <ProfileBar/>
-                    <NavBar/>
-                </header>
-                <Routes>
-                    <Route exact path='/create-new-user' element={< NewUserForm/>}></Route>
-                    <Route exact path='/login' element={< LoginForm/>}></Route>
-                    <Route exact path='/'
-                           element={< ProductList products={fakeProducts} addToCart={addToCart}/>}></Route>
-                    <Route exact path='/cart'
-                           element={< Cart products={currentCart} removeFromCart={removeFromCart}/>}></Route>
-                    <Route exact path='/admin' element={< AdminPage/>}></Route>
-                    <Route exact path='/admin/super' element={< SuperAdminPage/>}></Route>
-                </Routes>
-            </Router>
-        </div>
-    )
+  return (
+    <div className="flex flex-col w-screen min-h-screen bg-stone-100">
+      <Router>
+
+        <header className="flex w-full max-w-[1440px] m-auto items-center border-b text-xl bg-white md:shadow-sm">
+          <ProfileBar/>
+          <NavBar/>
+        </header>
+        
+        <main className='bg-stone-100 min-h-screen px-2'>
+          <Routes>
+            <Route exact path='/login' element={< LoginForm/>}></Route>
+            <Route exact path='/create-new-user' element={< NewUserForm/>}></Route>
+
+            <Route element={<RequireAuth allowedRoles={['user', 'admin', 'super-admin']} />}>
+              <Route exact path='/' element={< ProductList/>}></Route>
+              <Route exact path='/product/:id' element={< DetailsCard />}></Route>
+              <Route exact path='/cart' element={< Cart />}></Route>
+            </Route>
+
+            <Route element={<RequireAuth allowedRoles={['admin', 'super-admin']} />}>
+              <Route exact path='/admin' element={< AdminPage/>}></Route>
+            </Route>
+
+            <Route element={<RequireAuth allowedRoles={['super-admin']}/>}>
+              <Route exact path='/admin/super' element={< SuperAdminPage />}>
+                <Route exact path='/admin/super/store/:id' element={< ProductsOverview />}></Route>
+              </Route>
+            </Route>
+
+            <Route exact path='/*' element={<Page404 />}></Route>
+
+          </Routes>
+        </main>
+      </Router>
+    </div>
+  )
 }
 
 export default App;

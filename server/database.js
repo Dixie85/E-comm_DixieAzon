@@ -20,6 +20,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                 email VARCHAR(50),
                 password VARCHAR(50),
                 role VARCHAR(11),
+                refreshToken VARCHAR(50),
                 storeId INT
              )`,
             (err) => {
@@ -28,9 +29,9 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                     console.log('Already User-table there');
                 } else {
                     // Table just created, creating some rows
-                    const insert = 'INSERT INTO UserData (id, email, password, role, storeId) VALUES (?,?,?,?,?)';
+                    const insert = 'INSERT INTO UserData (id, email, password, role, refreshToken, storeId) VALUES (?,?,?,?,?,?)';
                     users.map(newUser => {
-                        db.run(insert, [newUser.id, newUser.email, newUser.password, newUser.role, newUser.uniqueStoreId]);
+                        db.run(insert, [newUser.id, newUser.email, newUser.password, newUser.role, '' ,newUser.uniqueStoreId]);
                     })
                     console.log(`${users.length} Users created`);
                 }
